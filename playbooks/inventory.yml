@@ -1,0 +1,25 @@
+---
+# A simplistic inventory for the classroom VMs.
+all:
+  hosts:
+    workstation.lab.example.com:
+      ansible_connection: local
+    utility.lab.example.com:
+      ansible_user: lab
+    bastion.lab.example.com:
+      ansible_user: root
+  vars:
+    # OpenShift versions.
+    ocp_maj: "4.14"
+    ocp_z: "4.14.0"
+
+    # Operator that needs to be installed.
+    op_cat: redhat-operators
+    op_pkg: amq-streams
+    op_chn: stable
+    desired_csv: amqstreams.v2.7.0-4
+
+    # The list of OpenShift clusters check-env will try to connect to.
+    clusters:
+      - ocp4
+...

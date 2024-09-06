@@ -1,0 +1,117 @@
+---
+# Fixes the openshift-marketplace catalogs by recreating them from original images.
+#
+# Needs the following vars from vars/main.yml:
+#
+#   removed_sources the catalog sources we remove
+#   catalog_sources the catalog sources we recreate
+#
+# These should come from inventory:
+#
+#   op_cat          catalog source
+#   op_pkg          operator package name
+#   op_chn          operator channel
+#   desired_csv     csv we look for
+#
+# This is necessary immediately after lab create.
+- name: Wait for the marketplace-operator to be up
+  k8s_info:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: v1
+    kind: pod
+    namespace: openshift-marketplace
+    label_selectors:
+      - name=marketplace-operator
+  register: mktplc_pod
+  until:
+    - (mktplc_pod.resources | length) == 1
+    - mktplc_pod.resources[0].status.containerStatuses[0].ready
+  retries: 30
+  delay: 10
+
+- name: Make sure the course catalog is not there
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: catalogsource
+    namespace: openshift-marketplace
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ removed_sources }}"
+
+- name: Make sure the pull secret will do for online sources
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: v1
+    kind: secret
+    namespace: openshift-config
+    name: pull-secret
+    state: present
+    definition: "{{ lookup('file', 'files/pull-secret.yml') | from_yaml }}"
+
+- name: Ensure the standard catalog sources are there
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: catalogsource
+    namespace: openshift-marketplace
+    name: "{{ item.name }}"
+    state: present
+    definition:
+      spec:
+        displayName: "{{ item.displ }}"
+        image: "{{ item.image }}"
+        publisher: "Red Hat"
+        sourceType: "grpc"
+  loop: "{{ catalog_sources }}"
+  loop_control:
+    label: "{{ item.displ }}"
+
+- name: Wait for the catalogsources to be ready.
+  k8s_info:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: catalogsource
+    namespace: openshift-marketplace
+    name: "{{ item.name }}"
+  register: cat_stat
+  until:
+    - (cat_stat.resources | length) == 1
+    - cat_stat.resources[0].status is defined
+    - cat_stat.resources[0].status.connectionState.lastObservedState == "READY"
+  retries: 30
+  delay: 10
+  loop: "{{ catalog_sources }}"
+  loop_control:
+    label: "{{ item.displ }}"
+
+- name: Wait for the operator packagemanifest to appear.
+  k8s_info:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: packages.operators.coreos.com/v1
+    kind: packagemanifest
+    namespace: openshift-marketplace
+    name: "{{ op_pkg }}"
+  register: op_mft
+  until:
+    - (op_mft.resources | length) == 1
+    - op_mft.resources[0].status.catalogSource == op_cat
+    - op_mft.resources[0].status.packageName == op_pkg
+  retries: 60
+  delay: 10
+
+- assert:
+    that:
+      - op_mft.resources is defined
+      - (op_mft.resources | length) > 0
+      - op_mft.resources[0].status.catalogSource == op_cat
+      - 'desired_csv in (op_mft.resources[0] | community.general.json_query("status.channels[*].currentCSV") | list)'
+    fail_msg: "ERROR: {{ op_pkg }} package manifest not deployed correctly."
+    success_msg: "OK: {{ op_pkg }} package manifest configured correctly."
+...
