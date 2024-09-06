@@ -35,7 +35,7 @@
   k8s:
     kubeconfig: tmp/kubeconfig-ocp4
     validate_certs: no
-    api_version: operators.coreos.com/v1
+    api_version: operators.coreos.com/v1alpha1
     kind: subscription
     name: "{{ role.sub_name }}"
     namespace: "{{ role.sub_nspc }}"
