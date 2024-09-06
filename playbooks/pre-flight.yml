@@ -3,9 +3,17 @@
   hosts: workstation.lab.example.com
   gather_subset: min
   become: no
-  roles:
-    - role: check-env
+  tasks:
+    - include_role:
+        name: check-env
       tags: check
-    - role: fix-operators
+    - include_role:
+        name: fix-operators
       tags: fix
+    - include_role:
+        name: remove-operators
+      vars:
+        - role: "{{ item }}"
+      loop: "{{ removed_operators }}"
+      tags: prep
 ...
