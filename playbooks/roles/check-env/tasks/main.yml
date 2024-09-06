@@ -32,6 +32,8 @@
       - java-17-openjdk-devel
       - python3-jmespath
       - python3-kubernetes
+      - ansible-collection-ansible-posix
+      - ansible-collection-community-general
     state: latest
 
 #- name: Make sure stuff is in PATH
