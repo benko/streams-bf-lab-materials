@@ -12,8 +12,8 @@
       tags: fix
     - include_role:
         name: remove-operators
-      vars:
-        - role: "{{ item }}"
       loop: "{{ removed_operators }}"
+      loop_control:
+        loop_var: role
       tags: prep
 ...
