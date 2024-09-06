@@ -1,0 +1,38 @@
+---
+# Ensures all the operator artifacts are created and waits for CSV to succeed.
+#
+# The following variables must exist:
+#
+#   removed_operators:    a list of below dictionaries
+#     - sub_nspc          subscription namespace
+#       sub_name          subscription name
+#       csv_name          CSV name to check for
+#       pre_cleanup       pre-cleanup tasks, a list of resource types to remove (ALL)
+#         - kind
+#           apiv
+#       add_cleanup       additional CRDs to remove post-uninstall, a list of regex name matches
+#
+# This role must then be applied as:
+#
+#   - include_role:
+#       name: remove-operators
+#     vars:
+#       - role: "{{ item }}"
+#     loop: "{{ removed_operators }}"
+#
+- name: Remove any of the resources found
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: "{{ item.apiv }}"
+    kind: "{{ item.kind }}"
+    delete_all: true
+    state: absent
+  loop: "{{ role.pre_cleanup }}"
+  register: removed
+
+- name: debug
+  debug:
+    var: removed
+
+...
