@@ -31,6 +31,7 @@
       - java-17-openjdk-headless
       - java-17-openjdk-devel
       - python3-jmespath
+      - python3.11-jmespath
       - python3-kubernetes
       - ansible-collection-ansible-posix
       - ansible-collection-community-general
