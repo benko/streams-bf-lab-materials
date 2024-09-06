@@ -1,0 +1,122 @@
+---
+# Ensures all the operator artifacts are created and waits for CSV to succeed.
+#
+# The following variables must exist:
+#
+#   desired_csv
+#   op_nsp
+#   op_cat
+#   op_pkg
+#   op_chn
+#
+# NOTE: Do NOT test by checking for presence of API resources - they do not always get cleaned up.
+#
+- name: Check if the CSV exists already
+  k8s_info:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: clusterserviceversion
+  register: all_csv
+
+- name: Find the wanted CSV among all CSVs
+  set_fact:
+    found_csv: "{{ (all_csv | community.general.json_query(\"resources[?metadata.name == \" + desired_csv + \"]\")) }}"
+  when:
+    - all_csv.resources is defined
+    - (all_csv.resources | length) > 0
+
+- name: Get details about the CSV if found
+  set_fact:
+    csv_ns: "{{ found_csv[0] | community.general.json_query('metadata.namespace') }}"
+    csv_name: "{{ found_csv[0] | community.general.json_query('metadata.name') }}"
+  when:
+    - found_csv is defined
+    - (found_csv | length) > 0
+
+- name: Make sure the namespace is there
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: v1
+    kind: namespace
+    name: "{{ op_nsp }}"
+
+# TODO: Finish this at some point.
+#- name: Make sure it has a properly configured OperatorGroup
+#  k8s_info:
+#    kubeconfig: tmp/kubeconfig-ocp4
+#    validate_certs: no
+#    api_version: operators.coreos.com/v1
+#    kind: operatorgroup
+#    namespace: "{{ op_nsp }}"
+#  register: found_opgrp
+
+- name: Also make sure there is a subscription
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: subscription
+    namespace: "{{ op_nsp }}"
+    name: "{{ op_pkg }}"
+    definition:
+      spec:
+        source: "{{ op_cat }}"
+        sourceNamespace: openshift-marketplace
+        name: "{{ op_pkg }}"
+        channel: "{{ op_chn }}"
+        installPlanApproval: Automatic
+
+# TODO: Finish this at some point.
+#- name: Wait for installPlan to show up
+#  k8s_info:
+#    kubeconfig: tmp/kubeconfig-ocp4
+#    validate_certs: no
+#    api_version: operators.coreos.com/v1alpha1
+#    kind: installplan
+#    namespace: "{{ op_nsp }}"
+#  register: installplan
+#  until:
+#    - installplan.resources is defined
+#    - (installplan.resources | length) > 0
+#    - installplan.resources[0].spec.approved
+#  retries: 12
+#  delay: 10
+
+- name: Wait for CSV to show up and complete
+  k8s_info:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: clusterserviceversion
+    namespace: "{{ op_nsp }}"
+    name: "{{ desired_csv }}"
+  register: new_csv
+  until:
+    - new_csv.resources is defined
+    - (new_csv.resources | length) > 0
+    - new_csv.resources[0].status is defined
+    - new_csv.resources[0].status.phase == "Succeeded"
+  retries: 30
+  delay: 10
+
+# TODO: Finish this at some point.
+#- name: Finally, wait for the pod
+#  k8s_info:
+#    kubeconfig: tmp/kubeconfig-ocp4
+#    validate_certs: no
+#    api_version: v1
+#    kind: pod
+#    namespace: rhsso
+#    label_selectors:
+#      - name = rhsso-operator
+#  register: sso_pod
+#  until:
+#    - sso_pod.resources is defined
+#    - (sso_pod.resources | length) > 0
+#    - sso_pod.resources[0].status is defined
+#    - sso_pod.resources[0].status.phase == "Running"
+#  retries: 30
+#  delay: 10
+...
