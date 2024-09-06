@@ -17,7 +17,41 @@ all:
     op_cat: redhat-operators
     op_pkg: amq-streams
     op_chn: stable
+    op_nsp: openshift-operators
     desired_csv: amqstreams.v2.7.0-4
+
+    # Some cleanup here.
+    removed_operators:
+      - sub_nspc: openshift-operators
+        sub_name: openshift-pipelines-operator
+        csv_name: foobar
+        pre_cleanup:
+          - openshiftpipelinesascodes.operator.tekton.dev
+          - tektonaddons.operator.tekton.dev
+          - tektonchains.operator.tekton.dev
+          - tektonconfigs.operator.tekton.dev
+          - tektonhubs.operator.tekton.dev
+          - tektoninstallersets.operator.tekton.dev
+          - tektonpipelines.operator.tekton.dev
+          - tektonresults.operator.tekton.dev
+          - tektontriggers.operator.tekton.dev
+          - repositories.pipelinesascode.tekton.dev
+          - resolutionrequests.resolution.tekton.dev
+          - clustertasks.tekton.dev
+          - customruns.tekton.dev
+          - pipelineruns.tekton.dev
+          - pipelines.tekton.dev
+          - stepactions.tekton.dev
+          - taskruns.tekton.dev
+          - tasks.tekton.dev
+          - verificationpolicies.tekton.dev
+          - clusterinterceptors.triggers.tekton.dev
+          - clustertriggerbindings.triggers.tekton.dev
+          - eventlisteners.triggers.tekton.dev
+          - interceptors.triggers.tekton.dev
+          - triggerbindings.triggers.tekton.dev
+          - triggers.triggers.tekton.dev
+          - triggertemplates.triggers.tekton.dev
 
     # The list of OpenShift clusters check-env will try to connect to.
     clusters:
