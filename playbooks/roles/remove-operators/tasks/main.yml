@@ -37,8 +37,8 @@
     validate_certs: no
     api_version: operators.coreos.com/v1
     kind: subscription
-    name: "{{ sub_name }}"
-    namespace: "{{ sub_nspc }}"
+    name: "{{ role.sub_name }}"
+    namespace: "{{ role.sub_nspc }}"
     state: absent
 
 - name: Do post-cleanup
