@@ -45,8 +45,8 @@ public class Producer {
         Properties props = new Properties();
 
         // Standard mandatory configs.
-        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, cf.getValue("security.protocol", String.class));
-        props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, cf.getOptionalValue("ssl.truststore.location", String.class).orElse("SSL"));
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, cf.getOptionalValue("security.protocol", String.class).orElse("SSL"));
+        props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, cf.getValue("ssl.truststore.location", String.class));
         props.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, cf.getValue("ssl.truststore.password", String.class));
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cf.getValue("kafka.bootstrap.server", String.class));
 
