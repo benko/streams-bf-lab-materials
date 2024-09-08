@@ -20,6 +20,9 @@
 #       - role: "{{ item }}"
 #     loop: "{{ removed_operators }}"
 #
+# What this means is that each item of removed_operators is expected to be
+# placed in the "role" variable prior to iterating over this role.
+#
 - name: Remove any of the resources found
   k8s:
     kubeconfig: tmp/kubeconfig-ocp4
@@ -61,7 +64,7 @@
     api_version: operators.coreos.com/v1alpha1
     kind: clusterserviceversion
     name: "{{ role.csv_name }}"
-    delete_all: true
+    namespace: "{{ role.sub_nspc }}"
     state: absent
   ignore_errors: yes
   when: role.csv_kill
