@@ -64,5 +64,5 @@
     delete_all: true
     state: absent
   ignore_errors: yes
-  when: csv_kill
+  when: role.csv_kill
 ...
