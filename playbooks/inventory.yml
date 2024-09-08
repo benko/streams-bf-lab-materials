@@ -24,7 +24,8 @@ all:
     removed_operators:
       - sub_nspc: openshift-operators
         sub_name: openshift-pipelines-operator
-        csv_name: foobar
+        csv_kill: yes
+        csv_name: openshift-pipelines-operator-rh.v1.14.3
         pre_cleanup:
           - kind: openshiftpipelinesascodes
             apiv: operator.tekton.dev/v1alpha1

@@ -54,4 +54,14 @@
   ignore_errors: yes
   loop: "{{ role.add_cleanup }}"
 
+- name: Remove the CSV as well, if so required
+  k8s:
+    kubeconfig: tmp/kubeconfig-ocp4
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: clusterserviceversion
+    name: "{{ role.csv_name }}"
+    state: absent
+  ignore_errors: yes
+  when: "{{ csv_kill }}"
 ...
