@@ -61,7 +61,8 @@
     api_version: operators.coreos.com/v1alpha1
     kind: clusterserviceversion
     name: "{{ role.csv_name }}"
+    delete_all: true
     state: absent
   ignore_errors: yes
-  when: "{{ csv_kill }}"
+  when: csv_kill
 ...
