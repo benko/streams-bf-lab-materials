@@ -28,6 +28,7 @@
     kind: "{{ item.kind }}"
     delete_all: true
     state: absent
+  ignore_errors: yes
   loop: "{{ role.pre_cleanup }}"
   register: removed
 
@@ -40,6 +41,7 @@
     name: "{{ role.sub_name }}"
     namespace: "{{ role.sub_nspc }}"
     state: absent
+  ignore_errors: yes
 
 - name: Do post-cleanup
   k8s:
@@ -49,6 +51,7 @@
     kind: customresourcedefinition
     name: "{{ item }}"
     state: absent
+  ignore_errors: yes
   loop: "{{ role.add_cleanup }}"
 
 ...
