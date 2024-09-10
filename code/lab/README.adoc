@@ -1,0 +1,50 @@
+== What you need? ==
+
+* Java 17 (or 21) SDK
+* Streams for Apache Kafka 2.7.0 (https://developers.redhat.com/products/streams-for-apache-kafka/download/)
+* Zookeeper and Broker Configuration (in this directory)
+* some sort of IDE
+
+== What to do with it? ==
+
+* Create a working directory for the demos.
+* Extract amq-streams.zip to that directory
+** (rename `kafka_2.13-3.7.0.redhat-00007` to `kafka` for ease of use)
+* Place the config files into the same directory (next to `kafka`).
+
+After setup, your working directory should look like this:
+
+[subs="+quotes"]
+----
+$ *ls -l*
+total 32
+-rw-r--r--@ 1 johndoe  staff  926 10 Sep 14:31 broker0.properties
+-rw-r--r--@ 1 johndoe  staff  926 10 Sep 14:31 broker1.properties
+-rw-r--r--@ 1 johndoe  staff  926 10 Sep 14:31 broker2.properties
+drwxr-xr-x@ 9 johndoe  staff  288 10 Sep 14:36 kafka/
+-rw-r--r--@ 1 johndoe  staff  101 10 Sep 14:31 zookeeper.properties
+----
+
+== How to start and stop the services? ==
+
+Start services (each in a separate window):
+
+* `./kafka/bin/zookeper-server-start.sh zookeeper.properties`
+* `./kafka/bin/kafka-server-start.sh broker0.properties`
+* `./kafka/bin/kafka-server-start.sh broker1.properties`
+* `./kafka/bin/kafka-server-start.sh broker2.properties`
+
+Stop the services in reverse order (broker2 first, etc.)
+
+== How to use the cluster? ==
+
+Use any of the following listeners as your bootstrap server:
+
+* `localhost:9092`
+* `localhost:9192`
+* `localhost:9292`
+
+You can also use all, or some, of them in a comma-separated list:
+
+`kafka.bootstrap.servers = localhost:9092,localhost:9192,localhost:9292`
+
