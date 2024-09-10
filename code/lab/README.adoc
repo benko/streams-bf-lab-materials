@@ -48,3 +48,45 @@ You can also use all, or some, of them in a comma-separated list:
 
 `kafka.bootstrap.servers = localhost:9092,localhost:9192,localhost:9292`
 
+== Managing Topics ==
+
+You can create, delete, and alter topics with the `kafka-topics.sh` command.
+
+Creating a topic:
++
+[subs="+quotes"]
+----
+$ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
+    *--topic sample-topic --partitions 9 \*
+    *--replication-factor 3 --config min.insync.replicas=2 --create*
+----
+
+Displaying a topic's configuration:
++
+[subs="+quotes"]
+----
+$ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
+    *--topic sample-topic --describe*
+
+Topic: sample-topic	TopicId: _zItfNPHS9Wzuzo2lh2CdA	PartitionCount: 9
+ReplicationFactor: 3	Configs: min.insync.replicas=2
+
+	Topic: sample-topic	Partition: 0	Leader: 0	Replicas: 0,1,2	Isr: 1,2,0
+	Topic: sample-topic	Partition: 1	Leader: 1	Replicas: 1,2,0	Isr: 1,2,0
+	Topic: sample-topic	Partition: 2	Leader: 2	Replicas: 2,0,1	Isr: 1,2,0
+	Topic: sample-topic	Partition: 3	Leader: 0	Replicas: 0,1,2	Isr: 1,2,0
+	Topic: sample-topic	Partition: 4	Leader: 1	Replicas: 1,2,0	Isr: 1,2,0
+	Topic: sample-topic	Partition: 5	Leader: 2	Replicas: 2,0,1	Isr: 1,2,0
+	Topic: sample-topic	Partition: 6	Leader: 0	Replicas: 0,1,2	Isr: 1,2,0
+	Topic: sample-topic	Partition: 7	Leader: 1	Replicas: 1,2,0	Isr: 1,2,0
+	Topic: sample-topic	Partition: 8	Leader: 2	Replicas: 2,0,1	Isr: 1,2,0
+----
+
+Deleting a topic:
++
+[subs="+quotes"]
+----
+$ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
+    *--topic sample-topic --delete*
+----
+
