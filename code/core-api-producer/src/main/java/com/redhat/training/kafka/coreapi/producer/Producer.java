@@ -1,8 +1,10 @@
 package com.redhat.training.kafka.coreapi.producer;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Properties;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.Callback;
@@ -13,9 +15,11 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.config.SslConfigs;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Producer {
-    static final Logger LOG = Logger.getLogger(Producer.class.getName());
+    static final Logger LOG = LoggerFactory.getLogger(Producer.class.getName());
 
     public static final String[] quotes = {
         "\"I agree with everything you say, but I would attack to the death your right to say it.\" -- Tom Stoppard (1937 - )",
@@ -45,7 +49,7 @@ public class Producer {
         Properties props = new Properties();
 
         // Standard mandatory configs.
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cf.getValue("kafka.bootstrap.server", String.class));
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cf.getValue("bootstrap.server", String.class));
         props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, cf.getOptionalValue("security.protocol", String.class).orElse("PLAINTEXT"));
         if (props.get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG).equals("SSL")) {
             props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, cf.getValue("ssl.truststore.location", String.class));
@@ -57,26 +61,67 @@ public class Producer {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, org.apache.kafka.common.serialization.StringSerializer.class.getName());
 
         // Optional stuff.
-        props.put(ProducerConfig.ACKS_CONFIG, cf.getOptionalValue("producer.acks", String.class).orElse("all"));
-        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, cf.getOptionalValue("producer.max-inflight", String.class).orElse("5"));
-        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, cf.getOptionalValue("producer.idempotent", String.class).orElse("true"));
+        boolean idempotence = true;
+        if (cf.getOptionalValue("producer.acks", String.class).isPresent()) {
+            String acks = cf.getValue("producer.acks", String.class);
+            if (!acks.equals("all")) {
+                LOG.info("Setting idempotence to false as acks != all.");
+                idempotence = false;
+            }
+            props.put(ProducerConfig.ACKS_CONFIG, acks);
+        } else {
+            props.put(ProducerConfig.ACKS_CONFIG, "all");
+        }
+        if (cf.getOptionalValue("producer.max-inflight", Integer.class).isPresent()) {
+            Integer maxInflight = cf.getValue("producer.max-inflight", Integer.class);
+            if (maxInflight > 5) {
+                LOG.info("Setting idempotence to false as max-inflight > 5.");
+                idempotence = false;
+            }
+            props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, maxInflight);
+        } else {
+            props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        }
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, cf.getOptionalValue("producer.idempotent", Boolean.class).orElse(idempotence));
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, cf.getOptionalValue("producer.batch", String.class).orElse("16384"));
         props.put(ProducerConfig.LINGER_MS_CONFIG, cf.getOptionalValue("producer.linger", String.class).orElse("0"));
         props.put(ProducerConfig.RETRIES_CONFIG, cf.getOptionalValue("producer.retries", String.class).orElse("2147483647"));
         props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, cf.getOptionalValue("producer.delivery-timeout", String.class).orElse("120000"));
+        // if (cf.getOptionalValue("producer.partitioner", String.class).isPresent()) {
+        //     switch (cf.getValue("producer.partitioner", String.class)) {
+        //         case ""
+        //     }
+        // }
 
         return props;
     }
     public static void main(String... args) {
+        // the remaining configurables
         String topic = ConfigProvider.getConfig().getOptionalValue("producer.topic", String.class).orElse("test-topic");
         int howManyrolls = ConfigProvider.getConfig().getOptionalValue("producer.num-rolls", Integer.class).orElse(1);
         int sendSize = ConfigProvider.getConfig().getOptionalValue("producer.num-records-per-roll", Integer.class).orElse(100);
         int waitAfterBatch = ConfigProvider.getConfig().getOptionalValue("producer.wait-after-roll", Integer.class).orElse(5000);
         int waitAfterSend = ConfigProvider.getConfig().getOptionalValue("producer.wait-after-send", Integer.class).orElse(500);
 
+        // keep a payload log for each run, truncate it
+        LOG.info("Opening payload log...");
+        PrintWriter pl;
+        try {
+            File payloadLog = new File("payload.log");
+            payloadLog.delete();
+            payloadLog.createNewFile();
+            pl = new PrintWriter(payloadLog);
+        } catch (IOException ioe) {
+            throw new RuntimeException("Could not (re)create payload log: " + ioe.getMessage());
+        }
+
+        // pick random quotes
         Random rnd = new Random();
+
+        // producer that will send the records
         KafkaProducer<Integer, String> prod = new KafkaProducer<>(configProperties());
 
+        LOG.info(String.format("Starting to produce %d records per roll, %d rolls...", sendSize, howManyrolls));
         for (int x = 0; x < howManyrolls; x++) {
             for (int y = 0; y < sendSize; y++) {
                 int idx = rnd.nextInt(quotes.length);
@@ -84,8 +129,9 @@ public class Producer {
                 prod.send(rec, new Callback() {
                     public void onCompletion(RecordMetadata rm, Exception e) {
                         if (e != null) {
-                            LOG.warning(e.getMessage());
+                            LOG.warn(e.getMessage());
                         } else {
+                            pl.println(String.format("%s,%d,%d,%s", rm.topic(), rm.partition(), rec.key(), rec.value()));
                             LOG.info(String.format("Sent: T:%s P:%d K:%d V:%s", rm.topic(), rm.partition(), rec.key(), rec.value()));
                         }
                     }
@@ -93,7 +139,7 @@ public class Producer {
                 try {
                     Thread.sleep(waitAfterSend);
                 } catch (InterruptedException ie) {
-                    LOG.warning("Interrupted in sleep-after-send: " + ie.getMessage());
+                    LOG.warn("Interrupted in sleep-after-send: " + ie.getMessage());
                 }
             }
             if (x < (howManyrolls - 1)) {
@@ -101,11 +147,12 @@ public class Producer {
                 try {
                     Thread.sleep(waitAfterBatch);
                 } catch (InterruptedException ie) {
-                    LOG.warning("Interrupted in sleep-after-roll: " + ie.getMessage());
+                    LOG.warn("Interrupted in sleep-after-roll: " + ie.getMessage());
                 }
             }
         }
 
         prod.close();
+        pl.close();;
     }
 }
