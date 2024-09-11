@@ -53,7 +53,7 @@ You can also use all, or some, of them in a comma-separated list:
 You can create, delete, and alter topics with the `kafka-topics.sh` command.
 
 Creating a topic:
-+
+
 [subs="+quotes"]
 ----
 $ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
@@ -62,7 +62,7 @@ $ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
 ----
 
 Displaying a topic's configuration:
-+
+
 [subs="+quotes"]
 ----
 $ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
@@ -83,7 +83,7 @@ ReplicationFactor: 3	Configs: min.insync.replicas=2
 ----
 
 Deleting a topic:
-+
+
 [subs="+quotes"]
 ----
 $ *./kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 \*
