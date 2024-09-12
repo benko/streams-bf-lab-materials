@@ -132,6 +132,7 @@ public class Producer {
                             LOG.warn(e.getMessage());
                         } else {
                             pl.println(String.format("%s,%d,%d,%s", rm.topic(), rm.partition(), rec.key(), rec.value()));
+                            pl.flush();
                             LOG.info(String.format("Sent: T:%s P:%d K:%d V:%s", rm.topic(), rm.partition(), rec.key(), rec.value()));
                         }
                     }
