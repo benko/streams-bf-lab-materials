@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 MYDIR=$(dirname $0)
 
 if [ ! -e "${MYDIR}/core-api-producer/payload.log" ]; then

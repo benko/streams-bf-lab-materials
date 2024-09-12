@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 if [ ! -d "./broker0" ]; then
     echo "ERROR: Can not find broker directory in current working dir."
