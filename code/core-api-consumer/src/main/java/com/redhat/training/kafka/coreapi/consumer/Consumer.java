@@ -46,6 +46,7 @@ public class Consumer {
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, cf.getOptionalValue("consumer.auto-commit", String.class).orElse("true"));
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, cf.getOptionalValue("consumer.ac-interval", String.class).orElse("5000"));
         props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, cf.getOptionalValue("consumer.fetch-min-bytes", String.class).orElse("1"));
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, cf.getOptionalValue("consumer.max-poll-recs", String.class).orElse("500"));
 
         switch (cf.getOptionalValue("consumer.assignment-strategy", String.class).orElse("cooperative")) {
             case "range":
