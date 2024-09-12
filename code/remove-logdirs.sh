@@ -14,6 +14,8 @@ select resp in "Y" "N"; do
     if [ "${resp}" = "N" ]; then
         echo "Exiting."
         exit 0
+    elif [ "${resp}" = "Y" ]; then
+        break
     fi
 done
 

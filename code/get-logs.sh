@@ -16,6 +16,8 @@ if [ -e "${MYDIR}/producer.log" ] || [ -e "${MYDIR}/consumerl.log" ]; then
         if [ "${resp}" = "N" ]; then
             echo "Exiting."
             exit 0
+        elif [ "${resp}" = "Y" ]; then
+            break
         fi
     done
     rm -f "${MYDIR}/producer.log" "${MYDIR}/consumer.log"
