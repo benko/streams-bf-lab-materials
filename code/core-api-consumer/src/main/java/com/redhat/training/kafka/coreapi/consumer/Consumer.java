@@ -127,10 +127,12 @@ public class Consumer {
                 continue;
             }
 
+            LOG.info("Received {} records. Processing.", recs.count());
+
             // consumer.wait-after-recv
             if (waitAfterRecv > 0) {
                 try {
-                    LOG.info("Received {} records. Sleeping for {} ms as per instructions...", recs.count(), waitAfterRecv);
+                    LOG.info("Sleeping for {} ms as per instructions...", waitAfterRecv);
                     Thread.sleep(waitAfterRecv);
                 } catch (InterruptedException ie) {
                     LOG.warn("Interrupted in sleep-after-recv: " + ie.getMessage());
