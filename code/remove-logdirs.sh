@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ ! -d "./broker0" ]; then
-    echo "ERROR: Can not find broker directory in current working dir."
+if [ ! "$(echo ./broker?)" = "./broker?" ]; then
+    echo "ERROR: Can not find broker directories in current working dir."
     echo "       Run this script from your lab directory."
     exit 1
 fi
@@ -19,5 +19,5 @@ select resp in "Y" "N"; do
     fi
 done
 
-rm -rf broker{0,1,2} zookeeper
+rm -rf broker? zookeeper
 echo "Done."
