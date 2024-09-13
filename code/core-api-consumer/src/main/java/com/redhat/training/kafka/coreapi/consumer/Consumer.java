@@ -48,7 +48,7 @@ public class Consumer {
         props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, cf.getOptionalValue("consumer.fetch-min-bytes", String.class).orElse("1"));
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, cf.getOptionalValue("consumer.max-poll-recs", String.class).orElse("500"));
 
-        switch (cf.getOptionalValue("consumer.assignment-strategy", String.class).orElse("cooperative")) {
+        switch (cf.getOptionalValue("consumer.assignment-strategy", String.class).orElse("coop")) {
             case "range":
                 props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                             org.apache.kafka.clients.consumer.RangeAssignor.class.getName());
@@ -61,7 +61,8 @@ public class Consumer {
                 props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                             org.apache.kafka.clients.consumer.StickyAssignor.class.getName());
                 break;
-            case "cooperative":
+            case "coop":
+            default:
                 props.put(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                             org.apache.kafka.clients.consumer.CooperativeStickyAssignor.class.getName());
         }
