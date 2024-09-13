@@ -6,7 +6,7 @@ if [ ! "$(echo ./broker?)" = "./broker?" ]; then
     exit 1
 fi
 
-echo "WARNING: Removing log directories for Zookeeper and all brokers."
+echo "WARNING: Removing log directories for Zookeeper, all brokers, and Kafka Connect."
 echo "         MAKE SURE THE PROCESSES ARE NOT RUNNING!"
 echo
 echo "Continue?"
@@ -19,5 +19,5 @@ select resp in "Y" "N"; do
     fi
 done
 
-rm -rf broker? zookeeper
+rm -rf broker? zookeeper connect
 echo "Done."
