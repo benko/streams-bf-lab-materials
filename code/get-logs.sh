@@ -2,7 +2,7 @@
 MYDIR=$(dirname $0)
 
 ERRORS=0
-if [ ! -e "${MYDIR}/core-api-producer/payload.log" ]; then
+if [ "$(echo ${MYDIR}/core-api-producer/payload*.log)" = "${MYDIR}/core-api-producer/payload*.log" ]; then
     echo "ERROR: Missing producer log."
     ERRORS=1
 fi
@@ -24,7 +24,7 @@ if [ ${ERRORS} -gt 0 ]; then
     done
 fi
 
-if [ -e "${MYDIR}/producer.log" ] || [ -e "${MYDIR}/consumerl.log" ]; then
+if [ -e "${MYDIR}/producer.log" ] || [ -e "${MYDIR}/consumer.log" ]; then
     echo "WARNING: Existing logs will be overwritten. Do you want to continue?"
     select resp in "Y" "N"; do
         if [ "${resp}" = "N" ]; then
@@ -37,10 +37,9 @@ if [ -e "${MYDIR}/producer.log" ] || [ -e "${MYDIR}/consumerl.log" ]; then
     rm -f "${MYDIR}/producer.log" "${MYDIR}/consumer.log"
 fi
 
-sort -gk2,3 -t, ${MYDIR}/core-api-producer/payload.log > ${MYDIR}/producer.log
+sort -gk2,3 -t, ${MYDIR}/core-api-producer/payload*.log > ${MYDIR}/producer.log
 sort -gk2,3 -t, ${MYDIR}/core-api-consumer/payload*.log > ${MYDIR}/consumer.log
 
-rm -fv ${MYDIR}/core-api-producer/payload.log ${MYDIR}/core-api-consumer/payload*.log
+rm -fv ${MYDIR}/core-api-producer/payload*.log ${MYDIR}/core-api-consumer/payload*.log
 
 echo "Producer and/or Consumer logs available in ${MYDIR} - old logs were removed."
-
