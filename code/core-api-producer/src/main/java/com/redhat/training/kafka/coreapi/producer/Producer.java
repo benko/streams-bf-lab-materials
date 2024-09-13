@@ -87,6 +87,9 @@ public class Producer {
         props.put(ProducerConfig.LINGER_MS_CONFIG, cf.getOptionalValue("producer.linger", String.class).orElse("0"));
         props.put(ProducerConfig.RETRIES_CONFIG, cf.getOptionalValue("producer.retries", String.class).orElse("2147483647"));
         props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, cf.getOptionalValue("producer.delivery-timeout", String.class).orElse("120000"));
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, cf.getOptionalValue("producer.request-timeout", String.class).orElse("30000"));
+
+        // TODO?
         // if (cf.getOptionalValue("producer.partitioner", String.class).isPresent()) {
         //     switch (cf.getValue("producer.partitioner", String.class)) {
         //         case ""
@@ -102,14 +105,25 @@ public class Producer {
         int sendSize = ConfigProvider.getConfig().getOptionalValue("producer.num-records-per-roll", Integer.class).orElse(100);
         int waitAfterBatch = ConfigProvider.getConfig().getOptionalValue("producer.wait-after-roll", Integer.class).orElse(5000);
         int waitAfterSend = ConfigProvider.getConfig().getOptionalValue("producer.wait-after-send", Integer.class).orElse(500);
+        int localId = ConfigProvider.getConfig().getOptionalValue("producer.local-id", Integer.class).orElse(-1);
+        boolean truncPayload = ConfigProvider.getConfig().getOptionalValue("producer.payload-trunc", Boolean.class).orElse(false);
 
         // keep a payload log for each run, truncate it
         LOG.info("Opening payload log...");
         PrintWriter pl;
         try {
-            File payloadLog = new File("payload.log");
-            payloadLog.delete();
-            payloadLog.createNewFile();
+            String logfile = "payload.log";
+            if (localId > -1) {
+                logfile = "payload-" + localId + ".log";
+            }
+            File payloadLog = new File(logfile);
+
+            if (truncPayload) {
+                LOG.info("Truncating payload log per request.");
+                payloadLog.delete();
+                payloadLog.createNewFile();
+            }
+
             pl = new PrintWriter(payloadLog);
         } catch (IOException ioe) {
             throw new RuntimeException("Could not (re)create payload log: " + ioe.getMessage());
