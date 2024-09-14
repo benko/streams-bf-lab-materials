@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ ! "$(echo ./broker?)" = "./broker?" ]; then
+if [ "$(echo ./broker?)" = "./broker?" ]; then
     echo "ERROR: Can not find broker directories in current working dir."
     echo "       Run this script from your lab directory."
     exit 1
