@@ -14,11 +14,11 @@ fi
 if [ ${ERRORS} -gt 0 ]; then
     echo "WARNING: Some logs are missing, chances are that you will get inconsistent results."
     echo "         Continue?"
-    select resp in "Y" "N"; do
-        if [ "${resp}" = "N" ]; then
+    select resp in "Yes" "No"; do
+        if [ "${resp}" = "No" ]; then
             echo "Exiting."
             exit 0
-        elif [ "${resp}" = "Y" ]; then
+        elif [ "${resp}" = "Yes" ]; then
             break
         fi
     done
@@ -26,11 +26,11 @@ fi
 
 if [ -e "${MYDIR}/producer.log" ] || [ -e "${MYDIR}/consumer.log" ]; then
     echo "WARNING: Existing logs will be overwritten. Do you want to continue?"
-    select resp in "Y" "N"; do
-        if [ "${resp}" = "N" ]; then
+    select resp in "Yes" "No"; do
+        if [ "${resp}" = "No" ]; then
             echo "Exiting."
             exit 0
-        elif [ "${resp}" = "Y" ]; then
+        elif [ "${resp}" = "Yes" ]; then
             break
         fi
     done

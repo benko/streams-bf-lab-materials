@@ -10,11 +10,11 @@ echo "WARNING: Removing log directories for Zookeeper, all brokers, and Kafka Co
 echo "         MAKE SURE THE PROCESSES ARE NOT RUNNING!"
 echo
 echo "Continue?"
-select resp in "Y" "N"; do
-    if [ "${resp}" = "N" ]; then
+select resp in "Yes" "No"; do
+    if [ "${resp}" = "No" ]; then
         echo "Exiting."
         exit 0
-    elif [ "${resp}" = "Y" ]; then
+    elif [ "${resp}" = "Yes" ]; then
         break
     fi
 done
