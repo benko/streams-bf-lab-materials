@@ -5,3 +5,4 @@ tmp*
 target
 .vscode
 *.log
+*.code-workspace
