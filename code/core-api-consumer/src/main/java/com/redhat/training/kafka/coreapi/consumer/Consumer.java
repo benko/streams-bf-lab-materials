@@ -1,6 +1,7 @@
 package com.redhat.training.kafka.coreapi.consumer;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
@@ -90,6 +91,18 @@ public class Consumer {
             System.setProperty("consumer.auto-commit", "false");
             ackEveryNum = ConfigProvider.getConfig().getValue("consumer.ack-every-x-msgs", Integer.class);
         }
+        boolean ackAfterBatch = false;
+        if (ConfigProvider.getConfig().getOptionalValue("consumer.ack-after-batch", Boolean.class).isPresent()) {
+            if (ConfigProvider.getConfig().getValue("consumer.ack-after-batch", Boolean.class)) {
+                LOG.warn("ack-after-batch is set, turning autocommit off.");
+                System.setProperty("consumer.auto-commit", "false");
+                ackAfterBatch = true;
+                if (ackEveryNum != 0) {
+                    LOG.warn("ack-every-x-msgs and ack-after-batch are exclusive; turning the former off.");
+                    ackEveryNum = 0;
+                }
+            }
+        }
 
         // keep a payload log for each run, truncate it
         LOG.info("Opening payload log...");
@@ -105,7 +118,8 @@ public class Consumer {
                 payloadLog.delete();
                 payloadLog.createNewFile();
             }
-            pl = new PrintWriter(payloadLog);
+            FileWriter fl = new FileWriter(logfile, true);
+            pl = new PrintWriter(fl);
         } catch (IOException ioe) {
             throw new RuntimeException("Could not (re)create payload log: " + ioe.getMessage());
         }
@@ -196,6 +210,12 @@ public class Consumer {
                 } catch (InterruptedException ie) {
                     LOG.warn("Interrupted in sleep-after-batch: " + ie.getMessage());
                 }
+            }
+
+            // consumer.ack-after-batch
+            if (ackAfterBatch) {
+                LOG.info("Batch completed, committing offsets as ackAfterBatch == true");
+                kc.commitSync();
             }
         }
         kc.close();

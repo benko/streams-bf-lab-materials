@@ -1,6 +1,7 @@
 package com.redhat.training.kafka.coreapi.producer;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Properties;
@@ -126,7 +127,8 @@ public class Producer {
                 payloadLog.createNewFile();
             }
 
-            pl = new PrintWriter(payloadLog);
+            FileWriter fl = new FileWriter(logfile, true);
+            pl = new PrintWriter(fl);
         } catch (IOException ioe) {
             throw new RuntimeException("Could not (re)create payload log: " + ioe.getMessage());
         }
