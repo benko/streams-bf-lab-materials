@@ -67,6 +67,7 @@
         sourceNamespace: openshift-marketplace
         name: "{{ op_pkg }}"
         channel: "{{ op_chn }}"
+        startingCSV: "{{ desired_csv }}"
         installPlanApproval: Automatic
 
 # TODO: Finish this at some point.
