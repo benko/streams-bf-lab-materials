@@ -1,0 +1,29 @@
+---
+# Creates the lab workdir and clones some git repositories into it.
+#
+# Required variables:
+#
+#   lab_sku:        ad482 (could require a match between install-labs and this role)
+#   lab_workdir:    ansible_facts['user_dir'] + "/" + (lab_sku | upper)
+#   lab_repos:      list of Git repo URLs to clone and their destination paths
+#     - url: foo
+#       path: bar
+#       branch: main
+#
+- name: Ensure lab_workdir exists
+  ansible.builtin.file:
+    path: "{{ lab_workdir }}"
+    state: directory
+    owner: student
+    group: student
+    mode: 0755
+
+- name: Clone the git repo(s) into lab_workdir
+  ansible.builtin.git:
+    repo: "{{ item.url }}"
+    dest: "{{ lab_workdir }}/{{ item.path }}"
+    clone: yes
+    version: "{{ item.branch | default('main') }}"
+  loop: "{{ lab_repos }}"
+
+...

@@ -1,0 +1,9 @@
+---
+# Defaults for the prep-workspace role.
+
+lab_sku: ad482
+lab_workdir: "{{ ansible_facts['user_dir'] }}/{{ lab_sku | upper }}"
+lab_repos:
+  - url: https://github.com/redhattraining/AD482-apps
+    path: AD482-apps
+...
