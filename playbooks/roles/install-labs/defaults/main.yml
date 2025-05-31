@@ -4,5 +4,7 @@
 lab_sku: ad482
 lab_package: "rht-labs-{{ lab_sku }}"
 lab_index_url: https://pypi.apps.tools-na.prod.nextcle.com/repository/labs/simple/
-lab_files_fixes: []
+lab_files_fixes:
+  - patch: files/kafka-cluster-template.patch
+    target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/cluster.yaml"
 ...

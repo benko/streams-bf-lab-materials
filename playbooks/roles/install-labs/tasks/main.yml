@@ -7,6 +7,8 @@
 #   lab_package:        rht-labs-{{ lab_sku }}
 #   lab_index_url:      https://pypi.apps.tools-na.prod.nextcle.com/repository/labs/simple/
 #   lab_files_fixes:    a list of patch files to apply to lab materials
+#     - patch: files/patch.patch
+#       target: some/file.txt
 #
 - name: Upgrade pip
   ansible.builtin.pip:
@@ -41,4 +43,18 @@
 - name: Activate the new labs
   ansible.builtin.shell: "lab select {{ lab_sku }}"
   when: (current_sku is not defined) or (current_sku != lab_sku)
+
+- name: Ensure ansible POSIX collection is there
+  become: yes
+  yum:
+    name:
+      - ansible-collection-ansible-posix
+    state: latest
+
+- name: Apply all the patches to lab resources
+  ansible.posix.patch:
+    src: "{{ item.patch }}"
+    dest: "{{ item.target }}"
+    ignore_whitespace: yes
+  loop: "{{ lab_files_fixes }}"
 ...

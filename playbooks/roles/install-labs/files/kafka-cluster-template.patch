@@ -1,0 +1,22 @@
+--- cluster.yaml-orig	2025-05-29 08:23:09.286814851 -0400
++++ cluster.yaml	2025-05-29 08:14:35.748238943 -0400
+@@ -11,7 +11,7 @@
+       name: ${CLUSTER_NAME}
+     spec:
+       kafka:
+-        version: 2.8.0
++        version: 3.9.0
+         replicas: "${{BROKER_REPLICAS}}"
+         listeners:
+           - name: plain
+@@ -30,8 +30,8 @@
+           offsets.topic.replication.factor: "${{BROKER_REPLICAS}}"
+           transaction.state.log.replication.factor: "${{BROKER_REPLICAS}}"
+           transaction.state.log.min.isr: "${{TRX_STATE_LOG_MIN_ISR}}"
+-          log.message.format.version: "2.8"
+-          inter.broker.protocol.version: "2.8"
++          log.message.format.version: "3.9"
++          inter.broker.protocol.version: "3.9"
+         storage:
+           type: ephemeral
+       zookeeper:
