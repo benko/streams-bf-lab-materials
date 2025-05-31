@@ -1,0 +1,8 @@
+---
+# Defaults for the install-labs role.
+
+lab_sku: ad482
+lab_package: "rht-labs-{{ lab_sku }}"
+lab_index_url: https://pypi.apps.tools-na.prod.nextcle.com/repository/labs/simple/
+lab_files_fixes: []
+...

@@ -1,0 +1,44 @@
+---
+# Updates pip, installs the lab scripts.
+#
+# The following variables must exist:
+#
+#   lab_sku:            ad482 (or some other SKU)
+#   lab_package:        rht-labs-{{ lab_sku }}
+#   lab_index_url:      https://pypi.apps.tools-na.prod.nextcle.com/repository/labs/simple/
+#   lab_files_fixes:    a list of patch files to apply to lab materials
+#
+- name: Upgrade pip
+  ansible.builtin.pip:
+    name: pip
+    state: latest
+
+- name: Install the lab package
+  ansible.builtin.pip:
+    name: "{{ lab_package }}"
+    state: present
+    extra_args: "--extra-index-url {{ lab_index_url }}"
+
+- name: Set the grading_config_file fact for convenience
+  set_fact:
+    grading_config_file: "{{ ansible_facts['user_dir'] }}/.grading/config.yaml"
+
+- name: Check if the grading config is there
+  ansible.builtin.stat:
+    path: "{{ grading_config_file }}"
+  register: grading_file
+
+- name: Load the current grading config
+  set_fact:
+    grading_cfg: "{{ lookup('ansible.builtin.file', grading_config_file) | from_yaml }}"
+  when: grading_file.stat.exists
+
+- name: Extract the current SKU
+  set_fact:
+    current_sku: "{{ grading_cfg.rhtlab.course.sku }}"
+  when: grading_cfg is defined
+
+- name: Activate the new labs
+  ansible.builtin.shell: "lab select {{ lab_sku }}"
+  when: (current_sku is not defined) or (current_sku != lab_sku)
+...

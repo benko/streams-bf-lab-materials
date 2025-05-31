@@ -19,4 +19,10 @@
     - include_role:
         name: deploy-operator
       tags: prep
+    - include_role:
+        name: install-labs
+      tags: workstation
+    - include_role:
+        name: prep-workspace
+      tags: workstation
 ...
