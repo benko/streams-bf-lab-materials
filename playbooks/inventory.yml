@@ -10,8 +10,8 @@ all:
       ansible_user: root
   vars:
     # OpenShift versions.
-    ocp_maj: "4.14"
-    ocp_z: "4.14.0"
+    ocp_maj: "4.18"
+    ocp_z: "4.18.6"
 
     # Operator that needs to be installed.
     op_cat: redhat-operators
@@ -25,7 +25,7 @@ all:
       - sub_nspc: openshift-operators
         sub_name: openshift-pipelines-operator
         csv_kill: yes
-        csv_name: openshift-pipelines-operator-rh.v1.14.3
+        csv_name: openshift-pipelines-operator-rh.v1.18.1
         pre_cleanup:
           - kind: openshiftpipelinesascodes
             apiv: operator.tekton.dev/v1alpha1
