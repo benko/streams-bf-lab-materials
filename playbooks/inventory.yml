@@ -16,9 +16,9 @@ all:
     # Operator that needs to be installed.
     op_cat: redhat-operators
     op_pkg: amq-streams
-    op_chn: stable
+    op_chn: amq-streams-2.9.x
     op_nsp: openshift-operators
-    desired_csv: amqstreams.v2.9.0-3
+    desired_csv: amqstreams.v2.9.3-1
 
     # Some cleanup here.
     removed_operators:
