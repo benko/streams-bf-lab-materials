@@ -10,6 +10,15 @@
 #     - patch: files/patch.patch
 #       target: some/file.txt
 #
+# TODO: ansible.posix.patch not found if you just run from playbook (syntax
+#       error?!?). Re-running goes well and finds the module.
+#
+# TODO: fix .m2/settings.xml
+#
+# TODO: set java to 11 (for the AD482 part)
+#
+# TODO: set java back to 21 (for the custom part)
+#
 - name: Upgrade pip
   ansible.builtin.pip:
     name: pip

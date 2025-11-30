@@ -7,4 +7,12 @@ lab_index_url: https://pypi.apps.tools-na.prod.nextcle.com/repository/labs/simpl
 lab_files_fixes:
   - patch: files/kafka-cluster-template.patch
     target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/cluster.yaml"
+  - patch: files/template-apiversion.patch
+    target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/cluster.yaml"
+  - patch: files/connect-cluster-template.patch
+    target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/connect-cluster.yaml"
+  - patch: files/template-apiversion.patch
+    target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/connect-cluster.yaml"
+  - patch: files/template-apiversion.patch
+    target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/elasticsearch.yaml"
 ...
