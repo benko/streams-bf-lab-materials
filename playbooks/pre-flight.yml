@@ -23,7 +23,7 @@
         loop_var: role
       tags: prep
     - include_role:
-        name: deploy-operator
+        name: deploy-operators
         apply:
           tags: prep
       loop: "{{ added_operators }}"
