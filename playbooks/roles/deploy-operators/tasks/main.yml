@@ -1,0 +1,202 @@
+---
+# Ensures all the operator artifacts are created and waits for CSV to succeed.
+#
+# The following variables must exist:
+#
+#   added_operators:        (list)
+#     - catalog:            the catalog of the manifest
+#       catalog_namespace:  (optional) catalog namespace (defaults to openshift-marketplace)
+#       package:            the name of the packagemanifest
+#       subscription:       the name of the operatorgroup and subscription (optional, defaults to package)
+#       channel:            which channel to install from
+#       namespace:          target namespace for subscription
+#       desired_csv:        for verification - wait for this CSV to appear
+#       og_namespaces:      (list) operatorgroup namespaces
+#       approval:           Automatic (default) or Manual
+#
+# This role must then be applied as:
+#
+#   - include_role:
+#       name: deploy-operators
+#     loop: "{{ added_operators }}"
+#     loop_control:
+#       loop_var: role
+#
+# What this means is that each item of added_operators is expected to be
+# placed in the "role" variable prior to iterating over this role.
+#
+# OPTIONAL:
+#
+#   kubeadmin_config    kubeadmin (or other admin) credentials (tmp/kubeconfig-ocp4)
+#
+# NOTE: Do NOT test by checking for presence of API resources - they do not
+#       always get cleaned up, so it might report a false positive.
+#
+- name: Tell what is happening
+  ansible.builtin.pause:
+    prompt: |
+      *******************************************************************************
+      * Deploying operator {{ role.package }} to namespace {{ role.namespace }}
+      *******************************************************************************
+    seconds: 0
+
+- name: Make sure the namespace is there
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: v1
+    kind: namespace
+    name: "{{ role.namespace }}"
+
+- name: Verify if the namespace has an OperatorGroup already
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: operators.coreos.com/v1
+    kind: operatorgroup
+    namespace: "{{ role.namespace }}"
+  register: found_opgrp
+
+- name: Show the operator groups found at verbosity 2+
+  debug:
+    var: found_opgrp
+    verbosity: 2
+
+- name: The OperatorGroup must have a matching targetNamespaces if it exists already, or we can not continue.
+  ansible.builtin.assert:
+    that:
+      - >
+        (role.og_namespaces is defined and
+         found_opgrp.resources[0].spec.targetNamespaces is defined and
+         found_opgrp.resources[0].spec.targetNamespaces == role.og_namespaces) or
+        ((role.og_namespaces is not defined or role.og_namespaces == []) and
+          found_opgrp.resources[0].spec.targetNamespaces is not defined)
+    success_msg: "Found existing OperatorGroup with matching targetNamespaces."
+    fail_msg: "FATAL: OperatorGroup already exists but does not have matching targetNamespaces."
+  when:
+    - found_opgrp.resources is defined
+    - found_opgrp.resources[0] is defined
+    - found_opgrp.resources[0].spec is defined
+
+- name: If not there yet, create an OperatorGroup
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: operators.coreos.com/v1
+    kind: operatorgroup
+    namespace: "{{ role.namespace }}"
+    name: "{{ role.subscription | default(role.package) }}"
+    definition:
+      spec:
+        targetNamespaces: "{{ role.og_namespaces | default(omit) }}"
+  when:
+    - >
+      found_opgrp.resources is not defined or
+      found_opgrp.resources[0] is not defined
+
+- name: Check if installPlans exist already before fondling around with subscriptions
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: installplan
+    namespace: "{{ role.namespace }}"
+  register: installplan_pre
+
+- name: Remember the installPlan(s) found prior to fondling around with subscriptions as a fact
+  ansible.builtin.set_fact:
+    sub_ip_pre: "{{ installplan_pre.resources | selectattr('metadata.ownerReferences.0.name', 'in', (role.subscription | default(role.package))) | sort(attribute='metadata.creationTimestamp', reverse=True) }}"
+
+- name: Show the installplan(s) found at verbosity 2+
+  debug:
+    var: sub_ip_pre
+    verbosity: 2
+
+- name: Also make sure there is a subscription
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: subscription
+    namespace: "{{ role.namespace }}"
+    name: "{{ role.subscription | default(role.package) }}"
+    definition:
+      spec:
+        source: "{{ role.catalog }}"
+        sourceNamespace: "{{ role.catalog_namespace | default('openshift-marketplace') }}"
+        name: "{{ role.package }}"
+        channel: "{{ role.channel }}"
+        startingCSV: "{{ role.desired_csv }}"
+        installPlanApproval: "{{ role.approval | default('Automatic') }}"
+  register: subscription
+
+- name: Handle installPlan if the subscription changed anything
+  block:
+    - name: Wait for installPlan to show up
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeadmin_config }}"
+        validate_certs: no
+        api_version: operators.coreos.com/v1alpha1
+        kind: installplan
+        namespace: "{{ role.namespace }}"
+      register: installplan
+      until:
+        - installplan.resources is defined
+        - (installplan.resources | length) > 0
+        - >
+          (installplan.resources |
+            selectattr('metadata.ownerReferences.0.name', 'in', (role.subscription | default(role.package))) |
+            length) > (sub_ip_pre | length)
+      retries: 12
+      delay: 10
+
+    - name: Remember the installPlan(s) found after the subscription has been modified
+      ansible.builtin.set_fact:
+        sub_ip_post: "{{ installplan.resources | selectattr('metadata.ownerReferences.0.name', 'in', (role.subscription | default(role.package))) | sort(attribute='metadata.creationTimestamp', reverse=True) }}"
+
+    - name: Show the installplan(s) found at verbosity 2+
+      debug:
+        var: sub_ip_post
+        verbosity: 2
+
+    - name: Remember the latest installPlan name as a new fact
+      ansible.builtin.set_fact:
+        latest_install_plan: "{{ sub_ip_post[0].metadata.name }}"
+
+    - name: Announce the installPlan name
+      ansible.builtin.debug:
+        msg: Found installPlan {{ latest_install_plan }}.
+
+    - name: Approve the installPlan if the approval was Manual
+      kubernetes.core.k8s_json_patch:
+        kubeconfig: "{{ kubeadmin_config }}"
+        validate_certs: no
+        api_version: operators.coreos.com/v1alpha1
+        kind: installplan
+        namespace: "{{ role.namespace }}"
+        name: "{{ latest_install_plan }}"
+        patch:
+          - op: replace
+            path: /spec/approved
+            value: true
+      when: role.approval == "Manual"
+
+  when: subscription.changed
+
+- name: Wait for CSV to show up and complete
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: operators.coreos.com/v1alpha1
+    kind: clusterserviceversion
+    namespace: "{{ role.namespace }}"
+    name: "{{ role.desired_csv }}"
+  register: new_csv
+  until:
+    - new_csv.resources is defined
+    - (new_csv.resources | length) > 0
+    - new_csv.resources[0].status is defined
+    - new_csv.resources[0].status.phase == "Succeeded"
+  retries: 30
+  delay: 10
+...

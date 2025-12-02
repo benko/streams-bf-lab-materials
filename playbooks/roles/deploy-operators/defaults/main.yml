@@ -1,0 +1,4 @@
+---
+# Variables that are usually overridden.
+kubeadmin_config: "tmp/kubeconfig-ocp4"
+...

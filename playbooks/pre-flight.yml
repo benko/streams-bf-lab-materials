@@ -6,23 +6,38 @@
   tasks:
     - include_role:
         name: check-env
+        apply:
+          tags: check
       tags: check
     - include_role:
         name: fix-operators
+        apply:
+          tags: fix
       tags: fix
     - include_role:
         name: remove-operators
+        apply:
+          tags: prep
       loop: "{{ removed_operators }}"
       loop_control:
         loop_var: role
       tags: prep
     - include_role:
         name: deploy-operator
+        apply:
+          tags: prep
+      loop: "{{ added_operators }}"
+      loop_control:
+        loop_var: role
       tags: prep
     - include_role:
         name: install-labs
+        apply:
+          tags: workstation
       tags: workstation
     - include_role:
         name: prep-workspace
+        apply:
+          tags: workstation
       tags: workstation
 ...

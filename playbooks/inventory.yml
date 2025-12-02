@@ -13,12 +13,29 @@ all:
     ocp_maj: "4.18"
     ocp_z: "4.18.6"
 
-    # Operator that needs to be installed.
-    op_cat: redhat-operators
-    op_pkg: amq-streams
-    op_chn: amq-streams-2.9.x
-    op_nsp: openshift-operators
-    desired_csv: amqstreams.v2.9.3-1
+    # Operators that need to be installed.
+    added_operators:
+      - catalog: redhat-operators
+        package: amq-streams
+        channel: amq-streams-2.9.x
+        namespace: openshift-operators
+        desired_csv: amqstreams.v2.9.3-1
+        og_namespaces: []
+        approval: Manual
+      - catalog: redhat-operators
+        package: service-registry-operator
+        channel: 2.x
+        namespace: openshift-operators
+        desired_csv: service-registry-operator.v2.6.13-r2-0.1763986602.p
+        og_namespaces: []
+        approval: Manual
+      - catalog: redhat-operators
+        package: elasticsearch-operator
+        channel: stable-5.8
+        namespace: openshift-operators-redhat
+        desired_csv: elasticsearch-operator.v5.8.21
+        og_namespaces: []
+        approval: Manual
 
     # Some cleanup here.
     removed_operators:
