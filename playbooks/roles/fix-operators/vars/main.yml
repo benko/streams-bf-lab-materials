@@ -6,14 +6,15 @@ removed_sources:
   - do370-catalog-cs
   - do380-catalog-cs
   - lb0004-catalog-cs
+registry_server: registry.redhat.io
 catalog_sources:
   - name: redhat-operators
     displ: Red Hat Operators
-    image: registry.redhat.io/redhat/redhat-operator-index:v{{ ocp_maj }}
+    image: "{{ registry_server }}/redhat/redhat-operator-index:v{{ ocp_maj }}"
   - name: certified-operators
     displ: Certified Operators
-    image: registry.redhat.io/redhat/certified-operator-index:v{{ ocp_maj }}
+    image: "{{ registry_server }}/redhat/certified-operator-index:v{{ ocp_maj }}"
   - name: community-operators
     displ: Community Operators
-    image: registry.redhat.io/redhat/community-operator-index:v{{ ocp_maj }}
+    image: "{{ registry_server }}/redhat/community-operator-index:v{{ ocp_maj }}"
 ...

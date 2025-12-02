@@ -37,6 +37,11 @@ all:
         og_namespaces: []
         approval: Manual
 
+    vrfy_cat: "{{ added_operators[0].catalog }}"
+    vrfy_pkg: "{{ added_operators[0].package }}"
+    vrfy_chn: "{{ added_operators[0].channel }}"
+    vrfy_csv: "{{ added_operators[0].desired_csv }}"
+
     # Some cleanup here.
     removed_operators:
       - sub_nspc: openshift-operators

@@ -1,22 +1,37 @@
 ---
 # Fixes the openshift-marketplace catalogs by recreating them from original images.
 #
-# Needs the following vars from vars/main.yml:
+# IMPORTANT: Wherever this role is applied, there must be a files/pull-secret.yml!
 #
-#   removed_sources the catalog sources we remove
-#   catalog_sources the catalog sources we recreate
+# REQUIRED:
 #
-# These should come from inventory:
+#   ocp_maj             OpenShift version (x.y; re catalogsource image)
 #
-#   op_cat          catalog source
-#   op_pkg          operator package name
-#   op_chn          operator channel
-#   desired_csv     csv we look for
+#   registry_server     the server catalogs come from (vars/main.yml, used in
+#                         catalog_sources, but in pull secret check, too)
+#   removed_sources     the catalog sources we remove (vars/main.yml)
+#   catalog_sources     the catalog sources we recreate (vars/main.yml)
+#
+# OPTIONAL:
+#
+#   kubeadmin_config    kubeadmin (or other admin) credentials (tmp/kubeconfig-ocp4)
+#
+# These would usually come from inventory, and should point to a single
+# manifest and its CSV that we can use to verify catalog sources were created
+# and populated successfully:
+#
+#   vrfy_cat     catalog source
+#   vrfy_pkg     operator package name
+#   vrfy_chn     channel we look in
+#   vrfy_csv     csv we look for
+#
+# NOTE: Fixing existing subscriptions, patching their catalogs, changing CSVs,
+#       etc., is performed by deploy-operators role.
 #
 # This is necessary immediately after lab create.
 - name: Wait for the marketplace-operator to be up
-  k8s_info:
-    kubeconfig: tmp/kubeconfig-ocp4
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
     validate_certs: no
     api_version: v1
     kind: pod
@@ -31,8 +46,8 @@
   delay: 10
 
 - name: Make sure the course catalog is not there
-  k8s:
-    kubeconfig: tmp/kubeconfig-ocp4
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
     validate_certs: no
     api_version: operators.coreos.com/v1alpha1
     kind: catalogsource
@@ -41,9 +56,25 @@
     state: absent
   loop: "{{ removed_sources }}"
 
-- name: Make sure the pull secret will do for online sources
-  k8s:
-    kubeconfig: tmp/kubeconfig-ocp4
+- name: Extract the pull-secret in openshift-config namespace
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
+    validate_certs: no
+    api_version: v1
+    kind: secret
+    namespace: openshift-config
+    name: pull-secret
+  register: existing_pull_secret
+
+- name: Try to extract the credential for registry_server
+  ansible.builtin.set_fact:
+    regsvr_cred: |
+      {{ existing_pull_secret.resources[0].data['.dockerconfigjson'] | b64decode | from_json |
+          community.general.json_query('auths."' + registry_server + '".auth') }}
+
+- name: Make sure the pull secret will do for online sources if the existing one does not suffice
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
     validate_certs: no
     api_version: v1
     kind: secret
@@ -51,10 +82,33 @@
     name: pull-secret
     state: present
     definition: "{{ lookup('file', 'files/pull-secret.yml') | from_yaml }}"
+  when: regsvr_cred is not defined or regsvr_cred == None or regsvr_cred == ''
 
+- name: Try to obtain cluster version if not set by ocp_maj
+  block:
+    - name: Read clusterversion/version
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeadmin_config }}"
+        validate_certs: no
+        api_version: config.openshift.io/v1
+        kind: clusterversion
+        name: version
+      register: clusterversion
+
+    - name: Store it as a fact
+      ansible.builtin.set_fact:
+        ocp_z: "{{ clusterversion.resources[0].status.desired.version }}"
+
+    - name: Store the major version as well
+      ansible.builtin.set_fact:
+        ocp_maj: "{{ ocp_z | ansible.builtin.regex_replace('\\.\\d+$', '') }}"
+
+  when: ocp_maj is not defined
+
+# TODO: switch to patch operatorhubs/cluster?
 - name: Ensure the standard catalog sources are there
-  k8s:
-    kubeconfig: tmp/kubeconfig-ocp4
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeadmin_config }}"
     validate_certs: no
     api_version: operators.coreos.com/v1alpha1
     kind: catalogsource
@@ -67,13 +121,35 @@
         image: "{{ item.image }}"
         publisher: "Red Hat"
         sourceType: "grpc"
+        grpcPodConfig:
+          extractContent:
+            cacheDir: /tmp/cache
+            catalogDir: /configs
+          memoryTarget: 120Mi
+          nodeSelector:
+            kubernetes.io/os: linux
+            node-role.kubernetes.io/master: ""
+          priorityClassName: system-cluster-critical
+          securityContextConfig: restricted
+          tolerations:
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+            operator: Exists
+          - effect: NoExecute
+            key: node.kubernetes.io/unreachable
+            operator: Exists
+            tolerationSeconds: 120
+          - effect: NoExecute
+            key: node.kubernetes.io/not-ready
+            operator: Exists
+            tolerationSeconds: 120
   loop: "{{ catalog_sources }}"
   loop_control:
     label: "{{ item.displ }}"
 
 - name: Wait for the catalogsources to be ready.
-  k8s_info:
-    kubeconfig: tmp/kubeconfig-ocp4
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeadmin_config }}"
     validate_certs: no
     api_version: operators.coreos.com/v1alpha1
     kind: catalogsource
@@ -90,28 +166,36 @@
   loop_control:
     label: "{{ item.displ }}"
 
-- name: Wait for the operator packagemanifest to appear.
-  k8s_info:
-    kubeconfig: tmp/kubeconfig-ocp4
-    validate_certs: no
-    api_version: packages.operators.coreos.com/v1
-    kind: packagemanifest
-    namespace: openshift-marketplace
-    name: "{{ op_pkg }}"
-  register: op_mft
-  until:
-    - (op_mft.resources | length) == 1
-    - op_mft.resources[0].status.catalogSource == op_cat
-    - op_mft.resources[0].status.packageName == op_pkg
-  retries: 60
-  delay: 10
+- name: Verify correct deployment
+  block:
+    - name: Wait for the operator packagemanifest to appear.
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ kubeadmin_config }}"
+        validate_certs: no
+        api_version: packages.operators.coreos.com/v1
+        kind: packagemanifest
+        namespace: openshift-marketplace
+        name: "{{ vrfy_pkg }}"
+      register: vrfy_mft
+      until:
+        - (vrfy_mft.resources | length) == 1
+        - vrfy_mft.resources[0].status.catalogSource == vrfy_cat
+        - vrfy_mft.resources[0].status.packageName == vrfy_pkg
+      retries: 60
+      delay: 10
 
-- assert:
-    that:
-      - op_mft.resources is defined
-      - (op_mft.resources | length) > 0
-      - op_mft.resources[0].status.catalogSource == op_cat
-      - 'desired_csv in (op_mft.resources[0] | community.general.json_query("status.channels[*].currentCSV") | list)'
-    fail_msg: "ERROR: {{ op_pkg }} package manifest not deployed correctly."
-    success_msg: "OK: {{ op_pkg }} package manifest configured correctly."
+    - ansible.builtin.assert:
+        that:
+          - vrfy_mft.resources is defined
+          - (vrfy_mft.resources | length) > 0
+          - vrfy_mft.resources[0].status.catalogSource == vrfy_cat
+          - 'vrfy_csv in (vrfy_mft.resources[0] | community.general.json_query("status.channels[?name==`" + vrfy_chn + "`].entries[*].name") | list)[0]'
+        fail_msg: "ERROR: {{ vrfy_pkg }} package manifest not deployed correctly."
+        success_msg: "OK: {{ vrfy_pkg }} package manifest configured correctly."
+
+  when:
+    - vrfy_cat is defined
+    - vrfy_pkg is defined
+    - vrfy_chn is defined
+    - vrfy_csv is defined
 ...
