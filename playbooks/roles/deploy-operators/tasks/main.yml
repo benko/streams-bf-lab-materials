@@ -112,6 +112,7 @@
     var: sub_ip_pre
     verbosity: 2
 
+# TODO: sometimes a subscription is there and this just overwrites it and reports a change (installPlanApproval!)
 - name: Also make sure there is a subscription
   kubernetes.core.k8s:
     kubeconfig: "{{ kubeadmin_config }}"
