@@ -1,0 +1,11 @@
+--- comprehensive_review.py.orig       2025-12-03 01:43:38.816669279 -0500
++++ comprehensive_review.py    2025-12-03 01:44:00.333558121 -0500
+@@ -80,7 +80,7 @@
+                                    "postgresql-sensors.sql")
+             ),
+             steps.create_connect_cluster(KAFKA_CONNECT_CLUSTER_NAME,
+-                                         "quay.io/redhattraining/ad482-"
++                    "registry.ocp4.example.com:8443/redhattraining/ad482-"
+                                          "ch05s08-connect-cluster:latest"),
+             steps.create_ocp_projects([self.__LAB__]),
+             steps.create_service_registry_postgresql(self.__LAB__),

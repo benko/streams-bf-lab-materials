@@ -42,5 +42,21 @@
     - ad482-ch05s08-connect-cluster:latest
     - ad482-postgresql:latest
 
-# patch scripts ad482/connect_connectors.py ad482/connect_debezium.py ad482/connect_transformation.py
+- name: Patch the relevant files with the new image location
+  ansible.posix.patch:
+    src: "{{ item.patch }}"
+    dest: "{{ item.target }}"
+    ignore_whitespace: yes
+  loop:
+    - patch: files/lab-cr.patch
+      target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/comprehensive_review.py"
+    - patch: files/lab-connectors.patch
+      target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/connect_connectors.py"
+    - patch: files/lab-debezium.patch
+      target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/connect_debezium.py"
+    - patch: files/lab-transformation.patch
+      target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/connect_transformation.py"
+    - patch: files/kube-postgres.patch
+      target: "{{ ansible_facts['user_dir'] }}/.local/lib/python3.9/site-packages/ad482/common/kubefiles/templates/postgresql.yaml"
+
 ...

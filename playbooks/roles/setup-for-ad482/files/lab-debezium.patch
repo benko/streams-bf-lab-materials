@@ -1,0 +1,11 @@
+--- connect_debezium.py.orig   2025-12-03 01:54:03.724320295 -0500
++++ connect_debezium.py        2025-12-03 01:54:18.438630936 -0500
+@@ -29,7 +29,7 @@
+                                    "postgresql-accountants.sql")
+             ),
+             steps.create_connect_cluster(KAFKA_CONNECT_CLUSTER_NAME,
+-                                         "quay.io/redhattraining/ad482-"
++                    "registry.ocp4.example.com:8443/redhattraining/ad482-"
+                                          "ch05s08-connect-cluster:latest")
+         ]
+         Console(items).run_items(action="Starting")
