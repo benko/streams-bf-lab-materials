@@ -35,7 +35,7 @@
 
 - name: Mirror the quay.io images to internal registry, fixing format along the way
   ansible.builtin.command:
-    cmd: /usr/bin/skopeo copy --format=v2s2 docker://quay.io/redhattraining/{{ item }} registry.ocp4.example.com:8443/redhattraining/{{ item }}
+    cmd: /usr/bin/skopeo copy --format=v2s2 docker://quay.io/redhattraining/{{ item }} docker://registry.ocp4.example.com:8443/redhattraining/{{ item }}
   loop:
     - ad482-ch05s04-connect-cluster:latest
     - ad482-ch05s06-connect-cluster:latest
