@@ -15,25 +15,25 @@ all:
 
     # Operators that need to be installed.
     added_operators:
-      - catalog: redhat-operators
-        package: amq-streams
-        channel: amq-streams-2.9.x
-        namespace: openshift-operators
-        desired_csv: amqstreams.v2.9.3-1
-        og_namespaces: []
-        approval: Manual
-      - catalog: redhat-operators
-        package: service-registry-operator
-        channel: 2.x
-        namespace: openshift-operators
-        desired_csv: service-registry-operator.v2.6.13-r2-0.1763986602.p
-        og_namespaces: []
-        approval: Manual
-      - catalog: redhat-operators
-        package: elasticsearch-operator
-        channel: stable-5.8
-        namespace: openshift-operators-redhat
-        desired_csv: elasticsearch-operator.v5.8.21
+#      - catalog: redhat-operators
+#        package: amq-streams
+#        channel: amq-streams-2.9.x
+#        namespace: openshift-operators
+#        desired_csv: amqstreams.v2.9.3-1
+#        og_namespaces: []
+#        approval: Manual
+#      - catalog: redhat-operators
+#        package: service-registry-operator
+#        channel: 2.x
+#        namespace: openshift-operators
+#        desired_csv: service-registry-operator.v2.6.13-r2-0.1763986602.p
+#        og_namespaces: []
+#        approval: Manual
+      - catalog: certified-operators
+        package: elasticsearch-eck-operator-certified
+        channel: stable
+        namespace: elasticsearch
+        desired_csv: elasticsearch-eck-operator-certified.v3.2.0
         og_namespaces: []
         approval: Manual
 
@@ -44,6 +44,10 @@ all:
 
     # Some cleanup here.
     removed_operators:
+      - sub_nspc: openshift-operators-redhat
+        sub_name: elasticsearch-operator
+        csv_kill: yes
+        csv_name: elasticsearch-operator.v5.8.21
       - sub_nspc: openshift-operators
         sub_name: openshift-pipelines-operator
         csv_kill: yes
