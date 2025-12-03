@@ -2,8 +2,6 @@
 #
 # TODO: fix .m2/settings.xml
 #
-# TODO: /usr/bin/python is 3.11 (alternatives); override the link or use python3 for exercises
-#
 # TODO: copy connect images from quay.io to registry.ocp4.example.com:8443 with --format=v2s2 and then patch
 #       ad482/connect_connectors.py ad482/connect_debezium.py ad482/connect_transformation.py
 #       to use the new images
@@ -11,7 +9,7 @@
 - name: Ensure Java is versioned correctly for AD482
   become: yes
   ansible.builtin.command:
-    command: /usr/sbin/alternatives --set {{ item }} java-11-openjdk.x86_64
+    cmd: /usr/sbin/alternatives --set {{ item }} java-11-openjdk.x86_64
   loop:
     - java
     - javac
@@ -24,8 +22,13 @@
 - name: Install an alternative for python3.9 if not found
   become: yes
   ansible.builtin.command:
-    command: /usr/sbin/alternatives --install /usr/bin/python python /usr/bin/python3.9 15
+    cmd: /usr/sbin/alternatives --install /usr/bin/python python /usr/bin/python3.9 15
   when:
-    - "/usr/bin/python3.9" not in (altpy['content'] | b64decode)
+    - not "/usr/bin/python3.9" in (altpy['content'] | b64decode)
+
+- name: Activate the Python alternative for AD482
+  become: yes
+  ansible.builtin.command:
+    cmd: /usr/sbin/alternatives --set python /usr/bin/python3.9
 
 ...

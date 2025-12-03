@@ -2,4 +2,11 @@
 #
 # TODO: set java/javac back to 21 (for the custom part)
 #
+- name: Ensure Java is versioned correctly for Streams BF labs
+  become: yes
+  ansible.builtin.command:
+    cmd: /usr/sbin/alternatives --set {{ item }} java-21-openjdk.x86_64
+  loop:
+    - java
+    - javac
 ...
