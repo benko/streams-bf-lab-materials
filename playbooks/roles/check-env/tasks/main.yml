@@ -35,6 +35,7 @@
       - python3-kubernetes
       - ansible-collection-ansible-posix
       - ansible-collection-community-general
+      - ansible-collection-containers-podman
     state: latest
 
 #- name: Make sure stuff is in PATH
