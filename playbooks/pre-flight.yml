@@ -22,6 +22,7 @@
       loop_control:
         loop_var: role
       tags: prep
+    # FIXME if an installplan has multiple owners?
     - include_role:
         name: deploy-operators
         apply:
@@ -40,4 +41,13 @@
         apply:
           tags: workstation
       tags: workstation
+    - include_role:
+        name: setup-for-ad482
+        apply:
+          tags:
+            - workstation
+            - ad482
+      tags:
+        - workstation
+        - ad482
 ...

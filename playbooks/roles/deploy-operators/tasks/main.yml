@@ -132,6 +132,7 @@
 
 - name: Handle installPlan if the subscription changed anything
   block:
+    # TODO: sometimes an installPlan will list multiple subscriptions as owners?!?
     - name: Wait for installPlan to show up
       kubernetes.core.k8s_info:
         kubeconfig: "{{ kubeadmin_config }}"
