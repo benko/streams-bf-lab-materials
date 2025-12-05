@@ -50,4 +50,13 @@
       tags:
         - workstation
         - ad482
+    - include_role:
+        name: setup-for-sakbf
+        apply:
+          tags:
+            - workstation
+            - sakbf
+      tags:
+        - workstation
+        - sakbf
 ...

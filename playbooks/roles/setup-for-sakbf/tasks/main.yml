@@ -1,6 +1,7 @@
 ---
+# Sets the lab env up for Streams BF labs.
 #
-# TODO: set java/javac back to 21 (for the custom part)
+# For now, just resets the Java alternatives back to Java 21.
 #
 - name: Ensure Java is versioned correctly for Streams BF labs
   become: yes
