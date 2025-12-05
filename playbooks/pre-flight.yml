@@ -56,7 +56,9 @@
           tags:
             - workstation
             - sakbf
+            - never
       tags:
         - workstation
         - sakbf
+        - never
 ...
